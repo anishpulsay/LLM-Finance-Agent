@@ -25,12 +25,70 @@ Never make up financial data. If information is missing, ask the user for clarif
 
 Keep your responses clear, concise, and helpful.
  """
+
+
+expense_tool = {
+    "type": "function",
+    "function": {
+        "name": "add_expense",
+        "description": "Add a new expense to the user's expense database.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "The name or description of the expense."
+                },
+                "amount": {
+                    "type": "number",
+                    "description": "The amount spent."
+                },
+                "date": {
+                    "type": "string",
+                    "description": "The date of the expense in YYYY-MM-DD format."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "The expense category, such as Food, Travel, Shopping, or Bills."
+                }
+            },
+            "required": ["name", "amount", "date", "category"]
+        }
+    }
+}
+tools = [expense_tool]
+
+
+def handle_tool_call(message):
+    tool_call = message.tool_calls[0]
+    if tool_call.function.name == "add_expense":
+        arguments = json.loads(tool_call.function.arguments)
+        result = add_expense(
+            name = arguments["name"],
+            amount = arguments["amount"],
+            date = arguments.get("date"),
+            category = arguments["category"]
+            )
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": result
+            }
+
+
 def chat(message,history):
     messages = [{"role":"system","content":system_message}] + history + [{"role":"user","content":message}]
-    response = openai.chat.completions.create(model=MODEL,messages=messages)
+    response = openai.chat.completions.create(model=MODEL,messages=messages,tools = tools)
+    if response.choices[0].finish_reason == "tool_calls":
+        message = response.choices[0].message
+        response = handle_tool_call(message)
+        messages.append(message)
+        messages.append(response)
+        response = openai.chat.completions.create(model = MODEL,messages = messages)
     return response.choices[0].message.content
-    
-    
-add_expense("Pizza",350,"2026-03-02","Food")
-print("Done")    
+
+
+
+
+   
 

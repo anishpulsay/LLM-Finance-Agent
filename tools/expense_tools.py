@@ -9,4 +9,6 @@ def add_expense(name,amount,date,category):
     conn.commit()
     conn.close()
     return "Expense added successfully"
+
+
     

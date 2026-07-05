@@ -6,6 +6,7 @@ import sqlite3
 import json 
 import gradio as gr 
 from tools.expense_tools import add_expense
+from tools.expense_tools import get_expenses
 
 load_dotenv(override=True)
 
@@ -56,7 +57,22 @@ expense_tool = {
         }
     }
 }
-tools = [expense_tool]
+
+get_expense_tool = { "type": "function", "function": {
+     "name": "get_expenses",
+      "description": "Get the expenses of the user for the particular category",
+       "parameters": { 
+        "type": "object", "properties": { 
+            "category": { 
+                "type": "string", 
+                "description": "The expense category, such as Food, Travel, Shopping, or Bills." 
+                        } 
+                        }
+                        
+                        } 
+                    } 
+                } 
+tools = [expense_tool,get_expense_tool]
 
 
 def handle_tool_call(message):
@@ -74,6 +90,16 @@ def handle_tool_call(message):
             "tool_call_id": tool_call.id,
             "content": result
             }
+    elif tool_call.function.name == "get_expenses":
+        arguments = json.loads(tool_call.function.arguments)
+        result = get_expenses(
+           category = arguments.get("category")
+            )
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": str(result)
+            }
 
 
 def chat(message,history):
@@ -87,7 +113,7 @@ def chat(message,history):
         response = openai.chat.completions.create(model = MODEL,messages = messages)
     return response.choices[0].message.content
 
-
+print(get_expenses())
 
 
    

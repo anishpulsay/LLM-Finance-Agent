@@ -5,7 +5,7 @@ from openai import OpenAI
 import sqlite3
 import json 
 import gradio as gr 
-from tools.expense_tools import add_expense
+from tools.expense_tools import add_expense, update_expenses
 from tools.expense_tools import get_expenses
 
 load_dotenv(override=True)
@@ -72,7 +72,27 @@ get_expense_tool = { "type": "function", "function": {
                         } 
                     } 
                 } 
-tools = [expense_tool,get_expense_tool]
+update_expense_tool = { "type": "function", "function": {
+     "name": "update_expenses",
+      "description": "Update an existing expense",
+       "parameters": { 
+        "type": "object", "properties": { 
+            "name": { 
+                "type": "string", 
+                "description": "The name or description of the expense to update, such as Pizza, Coffee, or Groceries." 
+                        },
+            "amount":{
+                "type" : "number",  
+                "description" : "The new amount to update the expense to"         
+                } 
+                        
+                        },
+                        "required" : ["name","amount"]
+                        
+                        } 
+                    } 
+                } 
+tools = [expense_tool,get_expense_tool,update_expense_tool]
 
 
 def handle_tool_call(message):
@@ -100,6 +120,17 @@ def handle_tool_call(message):
             "tool_call_id": tool_call.id,
             "content": str(result)
             }
+    elif tool_call.function.name == "update_expenses":
+        arguments = json.loads(tool_call.function.arguments)
+        result = update_expenses(
+           name = arguments["name"],
+           amount = arguments["amount"]
+            )
+        return {
+            "role": "tool",
+            "tool_call_id": tool_call.id,
+            "content": str(result)
+            }
 
 
 def chat(message,history):
@@ -113,7 +144,6 @@ def chat(message,history):
         response = openai.chat.completions.create(model = MODEL,messages = messages)
     return response.choices[0].message.content
 
-print(get_expenses())
 
 
    

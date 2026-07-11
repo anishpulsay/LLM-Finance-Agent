@@ -241,7 +241,10 @@ def chat(message,history):
 
 
 demo = gr.ChatInterface(chat)
-demo.launch()
+demo.launch(
+    inbrowser=True,
+    share=True
+)
 
 
 

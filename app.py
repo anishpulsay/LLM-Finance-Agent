@@ -6,7 +6,7 @@ import sqlite3
 import json 
 import gradio as gr 
 from tools.expense_tools import add_expense, update_expenses,delete_expense
-from tools.expense_tools import get_expenses, get_current_date
+from tools.expense_tools import get_expenses, get_current_date,financial_summary
 from datetime import date
 
 load_dotenv(override=True)
@@ -16,7 +16,7 @@ if openai_api_key:
     print(f"OpenAI API key exists and begins {openai_api_key[:6]}")
 else:
     print("OpenAI API key not found")
-MODEL = "gpt-4.1-mini"
+MODEL = "gpt-5.4-nano"
 openai = OpenAI()
 
 system_message = """ You are FinanceAgent, an AI assistant that helps users manage their personal finances.
@@ -125,7 +125,36 @@ delete_expense_tool = { "type": "function", "function": {
                         } 
                     } 
                 }
-tools = [expense_tool,get_expense_tool,update_expense_tool,delete_expense_tool,get_current_date_tool]
+financial_summary_tool = {
+    "type": "function",
+    "function": {
+        "name": "financial_summary",
+        "description": "Generate a financial summary based on optional filters.",
+        "parameters": {
+            "type": "object",
+            "properties": {
+                "name": {
+                    "type": "string",
+                    "description": "Filter by expense name, such as Pizza, Burger, or Coffee."
+                },
+                "category": {
+                    "type": "string",
+                    "description": "Filter by expense category such as Food, Travel, Shopping, or Bills."
+                },
+                "start_date": {
+                    "type": "string",
+                    "description": "Start date in YYYY-MM-DD format."
+                },
+                "end_date": {
+                    "type": "string",
+                    "description": "End date in YYYY-MM-DD format."
+                }
+            }
+        }
+    }
+}
+    
+tools = [expense_tool,get_expense_tool,update_expense_tool,delete_expense_tool,get_current_date_tool,financial_summary_tool]
 
 
 def handle_tool_call(tool_call):
@@ -180,6 +209,19 @@ def handle_tool_call(tool_call):
             "role": "tool",
             "tool_call_id": tool_call.id,
             "content": str(result)
+            }
+    elif tool_call.function.name == "financial_summary":
+        arguments = json.loads(tool_call.function.arguments) if tool_call.function.arguments else{}
+        result = financial_summary(
+            name = arguments.get("name"),
+            category = arguments.get("category"),
+            start_date = arguments.get("start_date"),
+            end_date = arguments.get("end_date")
+            )
+        return{
+                "role" : "tool",
+                "tool_call_id" : tool_call.id,
+                "content" : str(result)
             }
 
 

@@ -1,3 +1,4 @@
+from collections import UserString
 import sqlite3
 from datetime import date
 
@@ -47,3 +48,42 @@ def delete_expense(expense_id):
     conn.commit()
     conn.close()
     return "Deleted expense successfully"
+
+def financial_summary(name = None,category = None,start_date = None,end_date = None):
+    conn = sqlite3.connect('database/database.db')
+    c = conn.cursor()
+    query = "SELECT * FROM users WHERE 1 = 1"
+    params = []
+    if name:
+        query += " AND name = ?"
+        params.append(name)
+    if category:
+        query += " AND category = ?"
+        params.append(category)
+    if start_date:
+        query += " AND date >= ?"
+        params.append(start_date)
+    if end_date:
+        query += " AND date <= ?"
+        params.append(end_date)
+    c.execute(query,params)
+    expenses = c.fetchall()
+    conn.close()
+    if not expenses:
+        return{
+            "message" : "No expense found"
+        }
+    total_spent = sum(expense[2] for expense in expenses)
+    highest_expense = max(expense[2] for expense in expenses)
+    lowest_expense = min(expense[2] for expense in expenses)
+    return {
+        "total_spent": total_spent,
+        "highest_expense": highest_expense,
+        "lowest_expense": lowest_expense,
+        "count": len(expenses)
+    }
+
+
+
+
+

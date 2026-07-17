@@ -196,7 +196,8 @@ LLM Response
 
 ## 📷 Demo
 
-> Add screenshots or a GIF of the Gradio interface here.
+<img width="932" height="469" alt="image" src="https://github.com/user-attachments/assets/c61e4ed2-83bd-4d26-baa9-7e7c71199d1b" />
+
 
 ---
 
